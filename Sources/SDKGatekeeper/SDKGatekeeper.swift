@@ -18,7 +18,7 @@ public final class SDKGatekeeper: @unchecked Sendable {
     }
     
     public func shouldAllowTraffic(for sdkName: String) -> Bool {
-        guard let config = configurations[sdkName] else { return true }
+        guard let config = configurations[sdkName] else { return false }
         
         let deviceId = storage.getOrCreateDeviceId()
         
