@@ -7,7 +7,7 @@ A Swift package for intelligent SDK traffic management to help iOS developers st
 - **Traffic Percentage Limiting**: Route only a percentage of devices to expensive SDKs
 - **Device Expiration**: Automatically expire devices after N days (perfect for monthly tracked user limits)
 - **Persistent Bucketing**: Devices always get the same experience (stored in UserDefaults)
-- **Custom Filters**: Create your own logic for filtering
+- **Persistent Configuration**: Configurations are automatically saved and restored across app launches
 - **Multiple SDK Support**: Configure different rules for each SDK
 
 ## Installation
@@ -69,23 +69,6 @@ let secondaryConfig = GatekeeperConfiguration(
 gatekeeper.configure(for: "SecondaryAnalytics", configuration: secondaryConfig)
 ```
 
-### Custom Filters
-
-```swift
-// Only allow beta devices
-let betaConfig = GatekeeperConfiguration { deviceId in
-    return deviceId.hasPrefix("beta_")
-}
-gatekeeper.configure(for: "BetaFeatures", configuration: betaConfig)
-
-// Only specific devices
-let allowlistConfig = GatekeeperConfiguration { deviceId in
-    let allowedDevices = ["device1", "device2", "device3"]
-    return allowedDevices.contains(deviceId)
-}
-gatekeeper.configure(for: "PremiumAnalytics", configuration: allowlistConfig)
-```
-
 ## How It Works
 
 ### Traffic Percentage
@@ -105,6 +88,7 @@ gatekeeper.configure(for: "PremiumAnalytics", configuration: allowlistConfig)
 - Minimal overhead
 - Automatically generates device ID (UUID) on first use
 - Device ID persists across app launches
+- Configurations are automatically persisted and restored
 
 ## Use Cases
 
@@ -112,25 +96,25 @@ gatekeeper.configure(for: "PremiumAnalytics", configuration: allowlistConfig)
 2. **Traffic Sampling**: Test expensive features on subset of users
 3. **A/B Testing**: Control feature rollout percentages
 4. **Cost Management**: Reduce SDK costs by intelligent sampling
-5. **Beta Features**: Limit features to specific user segments
 
 ## Real-World Integration
 
 ### Initialize Before SDK Creation
 
 ```swift
-// Configure SDKGatekeeper BEFORE initializing expensive SDKs
 let gatekeeper = SDKGatekeeper.shared
 
-// Stay under 50k MTU limit - expire devices after 30 days  
+// Configure once on first launch - automatically persisted for future launches
 let analyticsConfig = GatekeeperConfiguration.expiration(days: 30)
 gatekeeper.configure(for: "Analytics", configuration: analyticsConfig)
 
 // Check before SDK initialization
 if gatekeeper.shouldAllowTraffic(for: "Analytics") {
-    // Initialize your analytics SDK
     let analytics = YourAnalyticsSDK(apiKey: "YOUR_KEY")
 }
+
+// Access device ID if needed
+let deviceId = gatekeeper.getDeviceId()
 ```
 
 ### Wrapper Pattern

@@ -1,45 +1,51 @@
 import Foundation
 
 /// SDKGatekeeper manages traffic control for various SDKs.
-/// Configure during app startup before initializing SDKs.
+/// Configurations are automatically persisted and restored across app launches.
 public final class SDKGatekeeper: @unchecked Sendable {
     public static let shared = SDKGatekeeper()
-    
+
     private let storage: GatekeeperStorage
     private var configurations: [String: GatekeeperConfiguration] = [:]
-    
+
     private init() {
         self.storage = GatekeeperStorage()
+        self.configurations = storage.loadAllConfigurations()
     }
-    
-    /// Configure SDK gatekeeper settings. Call this during app startup before SDK initialization.
+
+    /// Configure SDK gatekeeper settings. Configuration is automatically persisted.
     public func configure(for sdkName: String, configuration: GatekeeperConfiguration) {
         configurations[sdkName] = configuration
+        storage.saveConfiguration(configuration, for: sdkName)
+    }
+
+    /// Remove a persisted configuration for an SDK.
+    public func removeConfiguration(for sdkName: String) {
+        configurations.removeValue(forKey: sdkName)
+        storage.removeConfiguration(for: sdkName)
     }
     
     public func shouldAllowTraffic(for sdkName: String) -> Bool {
         guard let config = configurations[sdkName] else { return false }
-        
+
         let deviceId = storage.getOrCreateDeviceId()
-        
+
         if let expirationDays = config.expirationDays {
             if isDeviceExpired(deviceId: deviceId, expirationDays: expirationDays) {
                 return false
             }
         }
-        
+
         if let percentage = config.trafficPercentage {
-            // This is explicitly persisted - once determined, always the same
-            if let isIncluded = storage.isDeviceInPercentage(deviceId: deviceId, sdkName: sdkName, percentage: percentage) {
-                return isIncluded
-            }
+            return storage.isDeviceInPercentage(deviceId: deviceId, sdkName: sdkName, percentage: percentage)
         }
-        
-        if let customFilter = config.customFilter {
-            return customFilter(deviceId)
-        }
-        
+
         return true
+    }
+
+    /// Returns the device's unique identifier used for traffic decisions.
+    public func getDeviceId() -> String {
+        return storage.getOrCreateDeviceId()
     }
     
     public func resetDevice() {
