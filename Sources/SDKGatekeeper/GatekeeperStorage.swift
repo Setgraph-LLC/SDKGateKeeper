@@ -20,13 +20,13 @@ final class GatekeeperStorage {
         return newDeviceId
     }
     
-    func getFirstSeenDate(deviceId: String) -> Date? {
-        let key = "\(keyPrefix).firstSeen.\(deviceId)"
+    func getFirstSeenDate(deviceId: String, sdkName: String) -> Date? {
+        let key = "\(keyPrefix).firstSeen.\(sdkName).\(deviceId)"
         return userDefaults.object(forKey: key) as? Date
     }
-    
-    func setFirstSeenDate(deviceId: String, date: Date) {
-        let key = "\(keyPrefix).firstSeen.\(deviceId)"
+
+    func setFirstSeenDate(deviceId: String, sdkName: String, date: Date) {
+        let key = "\(keyPrefix).firstSeen.\(sdkName).\(deviceId)"
         userDefaults.set(date, forKey: key)
     }
     
@@ -51,11 +51,15 @@ final class GatekeeperStorage {
     }
     
     func resetDevice(deviceId: String) {
-        let firstSeenKey = "\(keyPrefix).firstSeen.\(deviceId)"
-        userDefaults.removeObject(forKey: firstSeenKey)
-
-        // Also clear percentage assignments (key format: prefix.percentage.<sdkName>.<deviceId>)
         let dict = userDefaults.dictionaryRepresentation()
+
+        // Clear first seen dates (key format: prefix.firstSeen.<sdkName>.<deviceId>)
+        let firstSeenPrefix = "\(keyPrefix).firstSeen."
+        for key in dict.keys where key.hasPrefix(firstSeenPrefix) && key.hasSuffix(".\(deviceId)") {
+            userDefaults.removeObject(forKey: key)
+        }
+
+        // Clear percentage assignments (key format: prefix.percentage.<sdkName>.<deviceId>)
         let percentagePrefix = "\(keyPrefix).percentage."
         for key in dict.keys where key.hasPrefix(percentagePrefix) && key.hasSuffix(".\(deviceId)") {
             userDefaults.removeObject(forKey: key)

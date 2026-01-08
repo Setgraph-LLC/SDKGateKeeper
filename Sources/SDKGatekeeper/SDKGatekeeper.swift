@@ -31,7 +31,7 @@ public final class SDKGatekeeper: @unchecked Sendable {
         let deviceId = storage.getOrCreateDeviceId()
 
         if let expirationDays = config.expirationDays {
-            if isDeviceExpired(deviceId: deviceId, expirationDays: expirationDays) {
+            if isDeviceExpired(deviceId: deviceId, sdkName: sdkName, expirationDays: expirationDays) {
                 return false
             }
         }
@@ -53,12 +53,12 @@ public final class SDKGatekeeper: @unchecked Sendable {
         storage.resetDevice(deviceId: deviceId)
     }
     
-    private func isDeviceExpired(deviceId: String, expirationDays: Int) -> Bool {
-        guard let firstSeenDate = storage.getFirstSeenDate(deviceId: deviceId) else {
-            storage.setFirstSeenDate(deviceId: deviceId, date: Date())
+    private func isDeviceExpired(deviceId: String, sdkName: String, expirationDays: Int) -> Bool {
+        guard let firstSeenDate = storage.getFirstSeenDate(deviceId: deviceId, sdkName: sdkName) else {
+            storage.setFirstSeenDate(deviceId: deviceId, sdkName: sdkName, date: Date())
             return false
         }
-        
+
         let expirationDate = firstSeenDate.addingTimeInterval(TimeInterval(expirationDays * 24 * 60 * 60))
         return Date() > expirationDate
     }
