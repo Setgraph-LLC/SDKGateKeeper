@@ -53,11 +53,11 @@ final class GatekeeperStorage {
     func resetDevice(deviceId: String) {
         let firstSeenKey = "\(keyPrefix).firstSeen.\(deviceId)"
         userDefaults.removeObject(forKey: firstSeenKey)
-        
-        // Also clear percentage assignments
+
+        // Also clear percentage assignments (key format: prefix.percentage.<sdkName>.<deviceId>)
         let dict = userDefaults.dictionaryRepresentation()
         let percentagePrefix = "\(keyPrefix).percentage."
-        for key in dict.keys where key.contains(percentagePrefix) && key.contains(deviceId) {
+        for key in dict.keys where key.hasPrefix(percentagePrefix) && key.hasSuffix(".\(deviceId)") {
             userDefaults.removeObject(forKey: key)
         }
     }
