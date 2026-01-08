@@ -63,9 +63,10 @@ final class GatekeeperStorage {
     }
     
     func clearAllData() {
-        let domain = Bundle.main.bundleIdentifier ?? ""
-        userDefaults.removePersistentDomain(forName: domain)
-        userDefaults.synchronize()
+        let dict = userDefaults.dictionaryRepresentation()
+        for key in dict.keys where key.hasPrefix(keyPrefix) {
+            userDefaults.removeObject(forKey: key)
+        }
     }
 
     // MARK: - Configuration Persistence
